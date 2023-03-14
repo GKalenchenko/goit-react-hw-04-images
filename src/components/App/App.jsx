@@ -1,27 +1,24 @@
 import { ImageGallery } from 'components/ImageGallery/ImageGallery';
 import { ImageGalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem';
 import { SearchBar } from 'components/SearchBar/SearchBar';
-import { Component } from 'react';
+import { useState } from 'react';
 import { Wrapper } from './App.styled';
 
-export class App extends Component {
-  state = {
-    inputValue: '',
-  };
+export const App = () => {
+  const [inputValue, setInputValue] = useState('');
 
-  onSubmit = e => {
+  const onSubmit = e => {
     e.preventDefault();
-    this.setState({ inputValue: e.target[1].value });
+
+    setInputValue(e.target[1].value);
   };
 
-  render() {
-    return (
-      <Wrapper>
-        <SearchBar onSubmit={this.onSubmit} />
-        <ImageGallery inputValue={this.state.inputValue}>
-          <ImageGalleryItem />
-        </ImageGallery>
-      </Wrapper>
-    );
-  }
-}
+  return (
+    <Wrapper>
+      <SearchBar onSubmit={onSubmit} />
+      <ImageGallery inputValue={inputValue}>
+        <ImageGalleryItem />
+      </ImageGallery>
+    </Wrapper>
+  );
+};
