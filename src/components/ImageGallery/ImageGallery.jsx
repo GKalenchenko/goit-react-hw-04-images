@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { ImageGalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem';
-import { Component } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { Button } from 'components/Button/Button';
 import { FlexWrapper, ImageList } from './ImageGallery.styled';
@@ -11,88 +11,77 @@ const API_KEY = 'key=32008820-29a82a4a3d033faa63b9c6371';
 const API_IMG_TYPE = 'image_type=photo&orientation=horizontal';
 const API_IMG_PER_PAGE = 'per_page=12';
 
-export class ImageGallery extends Component {
-  state = {
-    isLoading: false,
-    error: null,
-    response: [],
-    currentPage: 1,
+export const ImageGallery = ({ inputValue }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [data, setData] = useState([]);
+
+  const onClick = () => {
+    setCurrentPage(prevPage => prevPage + 1);
   };
 
-  async componentDidMount() {
-    // this.setState({ isLoading: true });
-    // try {
-    //   const response = await axios.get(
-    //     `${BASE_URL}?q=cat&page=${this.state.currentPage}&key=32008820-29a82a4a3d033faa63b9c6371&image_type=photo&orientation=horizontal&per_page=12'`
-    //   );
-    //   this.setState({ response: response.data.hits });
-    // } catch (error) {
-    //   this.setState({ error });
-    // } finally {
-    //   this.setState({ isLoading: false });
-    // }
-  }
+  useEffect(() => {
+    if (inputValue === '') return;
+    if (currentPage === 1) return;
 
-  async componentDidUpdate(prevProps, { currentPage }) {
-    if (this.props.inputValue !== prevProps.inputValue) {
-      this.setState({ isLoading: true });
-      this.setState({ currentPage: 1 });
+    const fetchData = async () => {
+      console.log('Bye', Date.now());
+      setIsLoading(true);
       try {
         const response = await axios.get(
-          `${BASE_URL}?q=${this.props.inputValue}&page=1&${API_KEY}&${API_IMG_TYPE}&${API_IMG_PER_PAGE}`
+          `${BASE_URL}?q=${inputValue}&page=${currentPage}&${API_KEY}&${API_IMG_TYPE}&${API_IMG_PER_PAGE}`
         );
-        this.setState({ response: [...response.data.hits] });
+        setData(prevResponse => {
+          return [...prevResponse, ...response.data.hits];
+        });
       } catch (error) {
-        this.setState({ error });
+        setError(error);
       } finally {
-        this.setState({ isLoading: false });
+        setIsLoading(false);
       }
-    }
+    };
+    fetchData();
+  }, [inputValue, currentPage]);
 
-    if (this.state.currentPage !== 1) {
-      if (this.state.currentPage !== currentPage) {
-        try {
-          this.setState({ isLoading: true });
-          const response = await axios.get(
-            `${BASE_URL}?q=${this.props.inputValue}&page=${this.state.currentPage}&${API_KEY}&${API_IMG_TYPE}&${API_IMG_PER_PAGE}`
-          );
-          this.setState(prev => {
-            return { response: [...prev.response, ...response.data.hits] };
-          });
-        } catch (error) {
-          this.setState({ error });
-        } finally {
-          this.setState({ isLoading: false });
-        }
+  useEffect(() => {
+    if (inputValue === '') return;
+
+    const fetchData = async () => {
+      console.log('Hi', Date.now());
+
+      setIsLoading(true);
+      try {
+        const response = await axios.get(
+          `${BASE_URL}?q=${inputValue}&page=1&${API_KEY}&${API_IMG_TYPE}&${API_IMG_PER_PAGE}`
+        );
+        setData(response.data.hits);
+      } catch (error) {
+        setError(error);
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }
+    };
 
-  onClick = () => {
-    this.setState(prevState => {
-      return { currentPage: prevState.currentPage + 1 };
-    });
-  };
+    fetchData();
+    setCurrentPage(1);
+  }, [inputValue]);
 
-  render() {
-    const { isLoading, error, response } = this.state;
-
-    return (
-      <>
-        {error && <p>Something went wrong please try again</p>}
-        {response.length > 0 && (
-          <ImageList className="gallery">
-            <ImageGalleryItem images={response} />
-          </ImageList>
-        )}
-        <FlexWrapper>
-          {isLoading && <Loader />}
-          {response.length > 0 && <Button onClick={this.onClick} />}
-        </FlexWrapper>
-      </>
-    );
-  }
-}
+  return (
+    <>
+      {error && <p>Something went wrong please try again</p>}
+      {data.length > 0 && (
+        <ImageList className="gallery">
+          <ImageGalleryItem images={data} />
+        </ImageList>
+      )}
+      <FlexWrapper>
+        {isLoading ?? <Loader />}
+        {data.length > 0 && <Button onClick={onClick} />}
+      </FlexWrapper>
+    </>
+  );
+};
 
 ImageGallery.propTypes = {
   inputValue: PropTypes.string.isRequired,
